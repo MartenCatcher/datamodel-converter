@@ -1,6 +1,8 @@
 package com.github.martencatcher.datamodelconverter
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.martencatcher.datamodelconverter.datamodelconverter.ObjectTransformer
+import com.github.martencatcher.datamodelconverter.datamodelconverter.builders.JsonBuilder
 import com.github.martencatcher.datamodelconverter.datamodelconverter.tree.JsonTreeBuilder
 import org.junit.jupiter.api.Test
 import java.util.*
@@ -22,6 +24,14 @@ internal class ObjectTransformerTest {
         System.out.println(res)
 
 
+        val builder = JsonBuilder()
+
+        val res2 = builder.build(res)
+
+        System.out.println(res2)
+
+        val om = ObjectMapper()
+        System.out.println(om.writeValueAsString(res2))
 
         //val path = "$.book[?(@.price <= $['expensive'].)].book[?(@.price <= $['expensive'])].wefdwe"
 

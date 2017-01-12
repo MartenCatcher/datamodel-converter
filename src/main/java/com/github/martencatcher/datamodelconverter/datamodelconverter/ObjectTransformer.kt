@@ -31,13 +31,12 @@ class ObjectTransformer constructor(val mappings: Map<String, String>, val build
 
         tree.applyPath(expression)?.let {
             when (it) {
-                is Collection<*> -> {
-                    val key = changeCounter(targetPath)
-                    it.forEachIndexed { i, any -> any?.let { value -> extracted.put(key.format(i), value) } }
-                }
+                is Collection<*> -> extracted.put(deleteCounter(targetPath), it)
                 else -> {
-                    val key = if (needCounter(targetPath)) targetPath.format(1) else targetPath
-                    extracted.put(key, it)
+                    val isArray = needCounter(targetPath)
+                    val key = if (isArray) deleteCounter(targetPath) else targetPath
+                    val value = if (isArray) listOf<Any>(it) else it
+                    extracted.put(key, value)
                 }
             }
 
@@ -45,8 +44,11 @@ class ObjectTransformer constructor(val mappings: Map<String, String>, val build
                 if(extracted.isNotEmpty()) {
                     val unwinding = HashMap<String, Any>()
                     for ((parent, pDoc) in extracted) {
-                        for ((child, cDoc) in extract(source.drop(1), target.drop(1), pDoc)) {
-                            unwinding.put(parent + child, cDoc)
+                        when (pDoc) {
+                            is Collection<*> -> {
+                                unwinding.put(parent, pDoc.map { value -> value?.let { extract(source.drop(1), target.drop(1), value) } }.toList())
+                            }
+                            else -> unwinding.put(parent, extract(source.drop(1), target.drop(1), pDoc))
                         }
                     }
                     return unwinding
