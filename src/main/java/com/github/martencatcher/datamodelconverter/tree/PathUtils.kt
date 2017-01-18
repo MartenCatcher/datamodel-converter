@@ -1,4 +1,4 @@
-package com.github.martencatcher.datamodelconverter.datamodelconverter.tree
+package com.github.martencatcher.datamodelconverter.tree
 
 import java.util.*
 

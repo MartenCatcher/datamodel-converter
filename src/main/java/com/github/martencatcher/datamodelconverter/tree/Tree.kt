@@ -1,4 +1,4 @@
-package com.github.martencatcher.datamodelconverter.datamodelconverter.tree
+package com.github.martencatcher.datamodelconverter.tree
 
 /**
  * Created by mast1016 on 09.01.2017.

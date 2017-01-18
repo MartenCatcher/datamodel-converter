@@ -1,4 +1,4 @@
-package com.github.martencatcher.datamodelconverter.datamodelconverter.exceptions
+package com.github.martencatcher.datamodelconverter.exceptions
 
 /**
  * Created by mast1016 on 11.01.2017.

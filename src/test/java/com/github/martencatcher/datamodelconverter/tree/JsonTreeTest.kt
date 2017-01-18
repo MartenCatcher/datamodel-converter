@@ -1,6 +1,5 @@
 package com.github.martencatcher.datamodelconverter.tree
 
-import com.github.martencatcher.datamodelconverter.datamodelconverter.tree.JsonTree
 import org.junit.jupiter.api.Test
 
 /**

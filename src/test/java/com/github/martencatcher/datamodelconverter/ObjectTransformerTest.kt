@@ -1,11 +1,14 @@
 package com.github.martencatcher.datamodelconverter
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.github.martencatcher.datamodelconverter.datamodelconverter.ObjectTransformer
-import com.github.martencatcher.datamodelconverter.datamodelconverter.builders.JsonBuilder
-import com.github.martencatcher.datamodelconverter.datamodelconverter.tree.JsonTreeBuilder
+import com.fasterxml.jackson.dataformat.xml.JacksonXmlModule
+import com.fasterxml.jackson.dataformat.xml.XmlMapper
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper
+import com.github.martencatcher.datamodelconverter.builders.JPathBuilder
+import com.github.martencatcher.datamodelconverter.tree.JsonTreeBuilder
 import org.junit.jupiter.api.Test
 import java.util.*
+
 
 /**
  * Created by mast1016 on 10.01.2017.
@@ -18,30 +21,27 @@ internal class ObjectTransformerTest {
         mappings.put("$.a[*].c[*].b[*]", "$.q1.q2[*].w1.w2[*].e1.e2[*]")
         val doc = "{ 'a' : [ {'c' : [{ 'b' : [1, 2, 3] }, { 'b' : [1, 2, 3] }, { 'b' : [1, 2, 3] }]}, {'c' : [ { 'b' : [4, 5, 6] }, { 'b' : [4, 5, 6] }, { 'b' : [4, 5, 6] }]}] }";
 
-
         val ot = ObjectTransformer(mappings, JsonTreeBuilder())
         val res = ot.generateCompletePaths(doc)
         System.out.println(res)
 
-
-        val builder = JsonBuilder()
-
+        val builder = JPathBuilder()
         val res2 = builder.build(res)
 
         System.out.println(res2)
 
-        val om = ObjectMapper()
-        System.out.println(om.writeValueAsString(res2))
+        val jsonMapper = ObjectMapper()
 
-        //val path = "$.book[?(@.price <= $['expensive'].)].book[?(@.price <= $['expensive'])].wefdwe"
+        System.out.println(jsonMapper.writeValueAsString(res2))
 
-        //val res: List<String> = ot.split(path)
+        val module = JacksonXmlModule()
+        module.setDefaultUseWrapper(true)
+        val xmlMapper = XmlMapper(module)
+        val xml = xmlMapper.writer().withoutRootName().writeValueAsString(res2).replace(Regex("<[/]*>"), "")
 
-        /*Assertions.assertNotNull(res)
-        Assertions.assertEquals(res.size, 3)
+        System.out.println(xml)
 
-        for(i in res) {
-            System.out.println("part of path: " + i)
-        }*/
+        val yamlMapper = YAMLMapper()
+        System.out.println(yamlMapper.writeValueAsString(res2))
     }
 }

@@ -1,4 +1,4 @@
-package com.github.martencatcher.datamodelconverter.datamodelconverter.builders
+package com.github.martencatcher.datamodelconverter.builders
 
 import java.util.*
 
@@ -6,7 +6,7 @@ import java.util.*
  * Created by mast1016 on 12.01.2017.
  */
 
-class JsonBuilder {
+class JPathBuilder {
     fun build(paths: Map<String, Any>): Map<String, Any> {
         val document = HashMap<String, Any>()
         for ((path, value) in paths) {

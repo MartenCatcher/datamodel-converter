@@ -1,14 +1,15 @@
-package com.github.martencatcher.datamodelconverter.datamodelconverter
+package com.github.martencatcher.datamodelconverter
 
-import com.github.martencatcher.datamodelconverter.datamodelconverter.tree.*
+import com.github.martencatcher.datamodelconverter.tree.*
 import java.util.*
 
 /**
  * Created by mast1016 on 29.12.2016.
  */
+//TODO: change type of mapping to List of (source: String, target: String, transformationExpression: String)
 class ObjectTransformer constructor(val mappings: Map<String, String>, val builder: TreeBuilder) {
 
-    fun generateCompletePaths(doc: String): Map<String, Any> {
+    fun generateCompletePaths(doc: Any): Map<String, Any> {
         val finalMappings = HashMap<String, Any>()
 
         for ((sourcePath, targetPath) in mappings) {
