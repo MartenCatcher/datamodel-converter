@@ -1,5 +1,6 @@
-package com.github.martencatcher.datamodelconverter.tree
+package com.github.martencatcher.datamodelconverter.path
 
+import com.github.martencatcher.datamodelconverter.exceptions.PathException
 import java.util.*
 
 /**
@@ -39,7 +40,7 @@ fun split(path: String): List<String> {
                         buffer.setLength(0)
                     }
                     -1 -> {
-                        throw RuntimeException("Invalid path expression, wrong symbol ']'")
+                        throw PathException("Invalid path expression, wrong symbol ']'")
                         //TODO: log
                     }
                 }
@@ -48,7 +49,7 @@ fun split(path: String): List<String> {
     }
 
     if (count > 0) {
-        throw RuntimeException("Invalid path expression, wrong symbol '['")
+        throw PathException("Invalid path expression, wrong symbol '['")
         //TODO: log
     }
 

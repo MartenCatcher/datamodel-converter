@@ -1,4 +1,4 @@
-package com.github.martencatcher.datamodelconverter.tree
+package com.github.martencatcher.datamodelconverter.path
 
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -17,7 +17,7 @@ internal class XmlTreeTest {
 
     @Test
     fun getValues() {
-        //val tree: XmlTree = XmlTree()
+        //val tree: XPath = XPath()
 
         //val document: String = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?><a><b>1</b><b>2</b><b>3</b><b>4</b></a>"
         val document: String = "<a><b>1</b><b>2</b><b>3</b><b>4</b></a>"

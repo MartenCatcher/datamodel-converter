@@ -1,9 +1,9 @@
-package com.github.martencatcher.datamodelconverter.tree
+package com.github.martencatcher.datamodelconverter.path
 
 /**
  * Created by mast1016 on 09.01.2017.
  */
-class XmlTree(doc: Any): Tree {
+class XPath(doc: Any): Path {
     private val document = when(doc) {
         is String -> doc //TODO: parse string value to xpath-ready object
         else -> doc
@@ -13,5 +13,5 @@ class XmlTree(doc: Any): Tree {
         throw UnsupportedOperationException("not implemented")
     }
 
-    override fun adjustPath(path: String) = if (path.startsWith("$")) path else "$" + path
+    override fun adjustPath(path: String) = if (path.startsWith("/")) path else "/" + path
 }

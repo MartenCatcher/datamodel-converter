@@ -5,7 +5,7 @@ import com.fasterxml.jackson.dataformat.xml.JacksonXmlModule
 import com.fasterxml.jackson.dataformat.xml.XmlMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper
 import com.github.martencatcher.datamodelconverter.builders.JPathBuilder
-import com.github.martencatcher.datamodelconverter.tree.JsonTreeBuilder
+import com.github.martencatcher.datamodelconverter.path.JsonTreeBuilder
 import org.junit.jupiter.api.Test
 import java.util.*
 

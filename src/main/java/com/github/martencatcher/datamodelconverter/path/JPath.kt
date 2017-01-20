@@ -1,4 +1,4 @@
-package com.github.martencatcher.datamodelconverter.tree
+package com.github.martencatcher.datamodelconverter.path
 
 import com.jayway.jsonpath.Configuration
 import com.jayway.jsonpath.JsonPath
@@ -6,7 +6,7 @@ import com.jayway.jsonpath.JsonPath
 /**
  * Created by mast1016 on 09.01.2017.
  */
-class JsonTree(doc: Any) : Tree {
+class JPath(doc: Any) : Path {
     private val document = when(doc) {
         is String -> Configuration.defaultConfiguration().jsonProvider().parse(doc)
         else -> doc
