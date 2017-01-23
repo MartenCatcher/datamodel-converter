@@ -5,6 +5,7 @@ import com.fasterxml.jackson.dataformat.xml.JacksonXmlModule
 import com.fasterxml.jackson.dataformat.xml.XmlMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper
 import com.github.martencatcher.datamodelconverter.builders.JPathBuilder
+import com.github.martencatcher.datamodelconverter.formatters.Format
 import com.github.martencatcher.datamodelconverter.path.JsonTreeBuilder
 import org.junit.jupiter.api.Test
 import java.util.*
@@ -43,5 +44,31 @@ internal class ObjectTransformerTest {
 
         val yamlMapper = YAMLMapper()
         System.out.println(yamlMapper.writeValueAsString(res2))
+    }
+
+    @Test
+    fun realTest() {
+        val mappings = HashMap<String, String>()
+        mappings.put("$.filter[*].source", "$.accessList.rules[*].source")
+        mappings.put("$.filter[*].target", "$.accessList.rules[*].target")
+        mappings.put("$.filter[*].protocol", "$.accessList.rules[*].protocol")
+        mappings.put("$.filter[*].port", "$.accessList.rules[*].port")
+        mappings.put("$.filter[*].access", "$.accessList.rules[*].access")
+
+        val doc = "{\"filter\" : [" +
+                "{ \"source\" : \"192.168.0.1\", \"target\" : \"10.10.0.3\", \"protocol\" : \"tcp\", \"port\" : \"22\", \"access\" : \"deny\"}," +
+                "{ \"source\" : \"192.168.0.1\", \"target\" : \"10.10.0.3\", \"protocol\" : \"icmp\", \"access\" : \"allow\"}]}" +
+                "{ \"source\" : \"192.168.0.1\", \"target\" : \"10.10.0.3\", \"protocol\" : \"tcp\", \"port\" : \"80\", \"access\" : \"deny\"}]}"
+
+        val ot = ObjectTransformer(mappings, JsonTreeBuilder())
+        val res = ot.generateCompletePaths(doc)
+
+        val builder = JPathBuilder()
+        val res2 = builder.build(res)
+
+        val formatter = com.github.martencatcher.datamodelconverter.formatters.Formatter()
+
+        System.out.println(formatter.format(Format.JSON, res2))
+        System.out.println(formatter.format(Format.XML, res2))
     }
 }
