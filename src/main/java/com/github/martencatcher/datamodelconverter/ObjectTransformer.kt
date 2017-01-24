@@ -90,7 +90,11 @@ class ObjectTransformer constructor(val mappings: Map<String, String>, val build
         return if (branch.size > 1) TargetList(branch) else branch.first()
     }
 
-    fun extractBranch(leaf: Branch, found: Any): List<TargetNode> {
-        return leaf.mappings.map { child -> extract(child.key, child.value, found) }.toList()
+    fun extractBranch(leaf: Branch, found: Any): Map<String, Any> {
+        return leaf.mappings.map { it.key to tryUnwrap(extract(it.key, it.value, found)) }.toMap()
+    }
+
+    fun tryUnwrap(node: TargetNode): Any {
+        return (node as? TargetValue)?.value ?: node
     }
 }

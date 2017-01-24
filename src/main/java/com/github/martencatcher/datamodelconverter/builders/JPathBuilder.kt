@@ -1,65 +1,33 @@
 package com.github.martencatcher.datamodelconverter.builders
 
-import java.util.*
+import com.github.martencatcher.datamodelconverter.path.TargetEmpty
+import com.github.martencatcher.datamodelconverter.path.TargetList
+import com.github.martencatcher.datamodelconverter.path.TargetValue
 
 /**
  * Created by mast1016 on 12.01.2017.
  */
 
 class JPathBuilder {
-    fun build(paths: Map<String, Any>): Map<String, Any> {
-        val document = HashMap<String, Any>()
-        for ((path, value) in paths) {
-            createNode(split(clean(path)), document, value)
+    fun build(doc: Any?): Any? {
+        when(doc) {
+            is TargetValue -> return russianDoll(doc.path, build(doc.value))
+            is Map<*, *> -> return doc.map { clean(it.key as String) to it.value }.toMap()
+            is Collection<*> -> return doc.filterNotNull().mapNotNull { value -> build(value) }.toList()
+            is TargetList -> return doc.values.mapNotNull { value -> build(value) }.toList()
+            is TargetEmpty -> return null
+            else -> return doc
         }
-
-        return document
     }
 
-    fun createNode(path: List<String>, document: MutableMap<String, Any>, value: Any): MutableMap<String, Any> {
-        when (path.size.compareTo(1)) {
-            0 -> {
-                when (value) {
-                    is Collection<*> -> {
-                        val collection = (document[path.first()] ?: ArrayList<Any>()) as MutableList<Any>
-                        value.forEachIndexed {
-                            index, element -> run {
-                                when (element) {
-                                    is Map<*, *> -> {
-                                        val saved = if(collection.size <= index) {
-                                            HashMap<String, Any>()
-                                        } else {
-                                            (collection[index] ?: HashMap<String, Any>()) as MutableMap<String, Any>
-                                        }
-                                        collection.add(index, enrichNode((element as Map<String, Any>).entries, saved))
-                                    }
-                                    else -> element?.let { collection.add(index, element) }
-                                }
-                            }
-                        }
-                        document.put(path.first(), collection)
-                    }
-                    else -> document.put(path.first(), value)
-                }
-            }
-            1 -> {
-                val doc = (document[path.first()] ?: HashMap<String, Any>()) as MutableMap<String, Any>
-                document.put(path.first(), createNode(path.drop(1), doc, value))
-            }
-        }
-
-        return document
+    fun russianDoll(key: String, value: Any?) : Map<String, Any?> {
+        return russianDoll(split(clean(key)), build(value))
     }
 
-    fun enrichNode(new: Set<Map.Entry<String, Any>>, exist: MutableMap<String, Any>): MutableMap<String, Any> {
-        when(new.size) {
-            0 -> {
-                return exist
-            }
-            else -> {
-                val set = new as MutableSet<Map.Entry<String, Any>>
-                return enrichNode(set.drop(1).toSet(), createNode(split(clean(set.first().key)), exist, set.first().value))
-            }
+    fun russianDoll(key: List<String>, value: Any?) : Map<String, Any?> {
+        when(key.size) {
+            1 -> return mapOf(key.first() to value)
+            else -> return mapOf(key.first() to russianDoll(key.drop(1), value))
         }
     }
 

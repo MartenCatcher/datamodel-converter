@@ -68,7 +68,9 @@ internal class ObjectTransformerTest {
 
         val formatter = com.github.martencatcher.datamodelconverter.formatters.Formatter()
 
-        System.out.println(formatter.format(Format.JSON, res2))
-        System.out.println(formatter.format(Format.XML, res2))
+        res2?.let {
+            System.out.println(formatter.format(Format.JSON, res2))
+            System.out.println(formatter.format(Format.XML, res2))
+        }
     }
 }

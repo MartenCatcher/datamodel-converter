@@ -9,7 +9,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper
  * Created by mast1016 on 18.01.2017.
  */
 class Formatter {
-    fun format(target: Format, data: Map<String, Any>): String {
+    fun format(target: Format, data: Any): String {
         when(target) {
             Format.XML  -> {
                 val module = JacksonXmlModule()
