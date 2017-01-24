@@ -57,8 +57,8 @@ internal class ObjectTransformerTest {
 
         val doc = "{\"filter\" : [" +
                 "{ \"source\" : \"192.168.0.1\", \"target\" : \"10.10.0.3\", \"protocol\" : \"tcp\", \"port\" : \"22\", \"access\" : \"deny\"}," +
-                "{ \"source\" : \"192.168.0.1\", \"target\" : \"10.10.0.3\", \"protocol\" : \"icmp\", \"access\" : \"allow\"}]}" +
-                "{ \"source\" : \"192.168.0.1\", \"target\" : \"10.10.0.3\", \"protocol\" : \"tcp\", \"port\" : \"80\", \"access\" : \"deny\"}]}"
+                "{ \"source\" : \"192.168.0.2\", \"target\" : \"10.10.0.3\", \"protocol\" : \"icmp\", \"access\" : \"allow\"}," +
+                "{ \"source\" : \"192.168.0.3\", \"target\" : \"10.10.0.3\", \"protocol\" : \"tcp\", \"port\" : \"80\", \"access\" : \"deny\"}]}"
 
         val ot = ObjectTransformer(mappings, JsonTreeBuilder())
         val res = ot.generateCompletePaths(doc)

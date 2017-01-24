@@ -4,14 +4,10 @@ import com.github.martencatcher.datamodelconverter.exceptions.PathException
 import com.github.martencatcher.datamodelconverter.path.*
 import java.util.*
 
-/**
- * Created by mast1016 on 29.12.2016.
- */
 //TODO: change type of mapping to List of (source: String, target: String, transformationExpression: String)
 class ObjectTransformer constructor(val mappings: Map<String, String>, val builder: TreeBuilder) {
 
-    fun generateCompletePaths(doc: Any): Map<String, Any> {
-        val finalMappings = HashMap<String, Any>()
+    fun generateCompletePaths(doc: Any): TargetNode {
         val preparedMappings = HashMap<String, List<Leaf>>()
 
         for ((sourcePath, targetPath) in mappings) {
@@ -21,16 +17,18 @@ class ObjectTransformer constructor(val mappings: Map<String, String>, val build
             mergePaths(sourceParts, targetParts, preparedMappings)
         }
 
-        for((source, target) in preparedMappings) {
-            finalMappings.putAll(extract(source, target, doc))
-        }
+        val targets = preparedMappings.map { mappings -> extract(mappings.key, mappings.value, doc) }.toList();
 
-        return finalMappings
+        when(targets.size) {
+            0 -> return TargetEmpty()
+            1 -> return targets.first()
+            else -> return TargetList(targets)
+        }
     }
 
     fun mergePaths(source: List<String>, target: List<String>, tree: MutableMap<String, List<Leaf>>): MutableMap<String, List<Leaf>> {
         if (source.size != target.size || source.isEmpty()) {
-            throw IllegalArgumentException("Array with different sizes doesn't support: source $source, target: $target")
+            throw IllegalArgumentException("Array with different sizes or empty doesn't support: source $source, target: $target")
         }
 
         val leafs: MutableList<Leaf> = if (tree.containsKey(source.first())) tree[source.first()] as MutableList<Leaf> else ArrayList<Leaf>()
@@ -43,12 +41,8 @@ class ObjectTransformer constructor(val mappings: Map<String, String>, val build
                 leafs.add(Branch(target.first(), null, null, mergePaths(source.drop(1), target.drop(1), HashMap<String, List<Leaf>>())))
             } else {
                 when (leaf) {
-                    is Branch -> {
-                        leaf.mappings = mergePaths(source.drop(1), target.drop(1), leaf.mappings)
-                    }
-                    is Leaf -> { /*TODO: log & throw*/
-                        throw PathException("Duplicate path!")
-                    }
+                    is Branch -> leaf.mappings = mergePaths(source.drop(1), target.drop(1), leaf.mappings)
+                    is Leaf -> throw PathException("Duplicate path!")
                 }
             }
         }
@@ -57,57 +51,46 @@ class ObjectTransformer constructor(val mappings: Map<String, String>, val build
         return tree
     }
 
-    fun extract(sourcePath: String, leafs: List<Leaf>, doc: Any): Map<String, Any> {
+    fun extract(sourcePath: String, leafs: List<Leaf>, doc: Any): TargetNode {
         val tree = builder.buildTree(doc)
         val expression = tree.adjustPath(sourcePath)
 
-        val extracted = HashMap<String, Any>()
-
         tree.applyPath(expression)?.let { found ->
-            leafs.forEach { leaf ->
-                when(leaf) {
-                    is Branch -> {
-
-                    }
-                    is Leaf -> {
-
-                    }
+            if (found is Collection<*>) {
+                if(leafs.size == 1 && leafs.first() is Branch) {
+                    val targetPath = leafs.first().targetPath
+                    val childs = found.filterNotNull().map { doc -> extractBranch(leafs.first() as Branch, doc) }.toList()
+                    return TargetValue(deleteCounter(targetPath), childs)
+                } else {
+                    val targets = found.filterNotNull().map { doc -> extract(leafs, doc) }.toList()
+                    return if(targets.size > 1) TargetList(targets) else targets.first()
                 }
-
-            }
-
-
-
-            when (found) {
-                is Collection<*> -> {
-                    leafs.forEach { leaf ->
-                        extracted.put(deleteCounter(leaf), it)
-                    }
-                }
-                else -> {
-                    val isArray = needCounter(targetPath)
-                    val key = if (isArray) deleteCounter(targetPath) else targetPath
-                    val value = if (isArray) listOf<Any>(it) else it
-                    extracted.put(key, value)
-                }
-            }
-
-            if (source.size > 1) {
-                if(extracted.isNotEmpty()) {
-                    val unwinding = HashMap<String, Any>()
-                    for ((parent, pDoc) in extracted) {
-                        when (pDoc) {
-                            is Collection<*> -> {
-                                unwinding.put(parent, pDoc.map { value -> value?.let { extract(source.drop(1), target.drop(1), value) } }.toList())
-                            }
-                            else -> unwinding.put(parent, extract(source.drop(1), target.drop(1), pDoc))
-                        }
-                    }
-                    return unwinding
-                }
+            } else {
+                return extract(leafs, found)
             }
         }
 
-        return extracted
+        return TargetEmpty()
+    }
+
+    fun extract(leafs: List<Leaf>, found: Any): TargetNode {
+        val branch = ArrayList<TargetNode>();
+        leafs.forEach { leaf ->
+            val targetPath = leaf.targetPath
+            when (leaf) {
+                is Branch -> branch.add(TargetValue(deleteCounter(targetPath), extractBranch(leaf, found)))
+                is Leaf -> {
+                    val isArray = needCounter(targetPath)
+                    val key = if (isArray) deleteCounter(targetPath) else targetPath
+                    val value = if (isArray) found as? Collection<*> ?: listOf<Any>(found) else found
+                    branch.add(TargetValue(key, value))
+                }
+            }
+        }
+        return if (branch.size > 1) TargetList(branch) else branch.first()
+    }
+
+    fun extractBranch(leaf: Branch, found: Any): List<TargetNode> {
+        return leaf.mappings.map { child -> extract(child.key, child.value, found) }.toList()
     }
 }
