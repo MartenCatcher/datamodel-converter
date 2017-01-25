@@ -4,13 +4,13 @@ import com.github.martencatcher.datamodelconverter.path.*
 import java.util.*
 
 //TODO: change type of mapping to List of (source: String, target: String, transformationExpression: String)
-class ObjectTransformer constructor(val mappings: Map<String, String>, val builder: TreeBuilder) {
+class ObjectTransformer constructor(val mappings: List<Rule>, val builder: TreeBuilder) {
 
     fun transform(doc: Any): Any {
         val preparedMappings = HashMap<String, List<Leaf>>()
 
-        for ((sourcePath, targetPath) in mappings) {
-            mergePaths(preparedMappings, splitPath(sourcePath), splitPath(targetPath))
+        for (rule in mappings) {
+            mergePaths(preparedMappings, splitPath(rule.sourcePath), splitPath(rule.targetPath), rule)
         }
 
         val targets = preparedMappings.map { mappings -> extract(mappings.key, mappings.value, doc) }.toList()
@@ -20,7 +20,7 @@ class ObjectTransformer constructor(val mappings: Map<String, String>, val build
 
     // 1. prepare
 
-    fun mergePaths(tree: MutableMap<String, List<Leaf>>, source: List<String>, target: List<String>): MutableMap<String, List<Leaf>> {
+    fun mergePaths(tree: MutableMap<String, List<Leaf>>, source: List<String>, target: List<String>, rule: Transformation): MutableMap<String, List<Leaf>> {
         if (source.size != target.size || source.isEmpty()) {
             throw IllegalArgumentException("Array with different sizes or empty doesn't support: source $source, target: $target")
         }
@@ -28,14 +28,14 @@ class ObjectTransformer constructor(val mappings: Map<String, String>, val build
         val leafs: MutableList<Leaf> = if (tree.containsKey(source.first())) tree[source.first()] as MutableList<Leaf> else ArrayList<Leaf>()
 
         if (source.size == 1) {  //TODO: in case with exist leaf need to throw Exception
-            leafs.add(Leaf(target.first(), null, null))
+            leafs.add(Leaf(target.first(), rule.expression, rule.condition))
         } else {
             val leaf = leafs.firstOrNull { leaf -> leaf.targetPath == target.first() }
             if (leaf == null) {
-                leafs.add(Branch(target.first(), null, null, mergePaths(HashMap<String, List<Leaf>>(), source.drop(1), target.drop(1))))
+                leafs.add(Branch(target.first(), null, null, mergePaths(HashMap<String, List<Leaf>>(), source.drop(1), target.drop(1), rule)))
             } else {
                 when (leaf) {
-                    is Branch -> leaf.mappings = mergePaths(leaf.mappings, source.drop(1), target.drop(1))
+                    is Branch -> leaf.mappings = mergePaths(leaf.mappings, source.drop(1), target.drop(1), rule)
                     is Leaf -> throw PathException("Duplicate path!")
                 }
             }
@@ -47,16 +47,15 @@ class ObjectTransformer constructor(val mappings: Map<String, String>, val build
 
     // 2. construct
 
-    fun extract(sourcePath: String, leafs: List<Leaf>, doc: Any): Map<String, Any> {
+    fun extract(sourcePath: String, leafs: List<Leaf>, doc: Any): Map<String, Any?> {
         val tree = builder.buildTree(doc)
         val expression = tree.adjustPath(sourcePath)
         return tree.applyPath(expression)?.let { extract(leafs, it) } ?: mutableMapOf<String, Any>()
     }
 
-    fun extract(leafs: List<Leaf>, found: Any): Map<String, Any> {
+    fun extract(leafs: List<Leaf>, found: Any): Map<String, Any?> {
         return leafs.map { leaf ->
-            val isArray = needCounter(leaf.targetPath)
-            val key = if (isArray) deleteCounter(leaf.targetPath) else leaf.targetPath
+            val key = deleteCounter(leaf.targetPath)
             val value = when (leaf) {
                 is Branch -> {
                     (found as? Collection<*>)
@@ -64,10 +63,10 @@ class ObjectTransformer constructor(val mappings: Map<String, String>, val build
                             ?.map { element ->
                                 leaf.mappings
                                         .flatMap { mapping -> extract(mapping.key, mapping.value, element).entries }
-                                        .fold(mutableMapOf<String, Any>()) { m, it -> m.put(it.key, it.value); m }
+                                        .fold(mutableMapOf<String, Any?>()) { m, it -> m.put(it.key, it.value); m }
                             } ?: leaf.mappings.map { mapping -> extract(mapping.key, mapping.value, found) }
                 }
-                is Leaf -> if (isArray) found as? Collection<*> ?: listOf<Any>(found) else found
+                is Leaf -> leaf.apply(found)
                 else -> throw PathException("Unknown tree element type!")
             }
             (key to value)
