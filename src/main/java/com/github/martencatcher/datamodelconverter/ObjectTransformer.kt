@@ -6,14 +6,11 @@ import java.util.*
 //TODO: change type of mapping to List of (source: String, target: String, transformationExpression: String)
 class ObjectTransformer constructor(val mappings: Map<String, String>, val builder: TreeBuilder) {
 
-    fun generateCompletePaths(doc: Any): Any {
+    fun transform(doc: Any): Any {
         val preparedMappings = HashMap<String, List<Leaf>>()
 
         for ((sourcePath, targetPath) in mappings) {
-            val sourceParts = splitPath(sourcePath)
-            val targetParts = splitPath(targetPath)
-
-            mergePaths(preparedMappings, sourceParts, targetParts)
+            mergePaths(preparedMappings, splitPath(sourcePath), splitPath(targetPath))
         }
 
         val targets = preparedMappings.map { mappings -> extract(mappings.key, mappings.value, doc) }.toList()
@@ -53,14 +50,11 @@ class ObjectTransformer constructor(val mappings: Map<String, String>, val build
     fun extract(sourcePath: String, leafs: List<Leaf>, doc: Any): Map<String, Any> {
         val tree = builder.buildTree(doc)
         val expression = tree.adjustPath(sourcePath)
-
-        tree.applyPath(expression)?.let { return extract(leafs, it) }
-
-        return mapOf()
+        return tree.applyPath(expression)?.let { extract(leafs, it) } ?: mapOf<String, Any>()
     }
 
     fun extract(leafs: List<Leaf>, found: Any): Map<String, Any> {
-        val obj = leafs.map { leaf ->
+        return leafs.map { leaf ->
             val isArray = needCounter(leaf.targetPath)
             val key = if (isArray) deleteCounter(leaf.targetPath) else leaf.targetPath
             val value = when (leaf) {
@@ -78,8 +72,6 @@ class ObjectTransformer constructor(val mappings: Map<String, String>, val build
             }
             (key to value)
         }.toMap()
-
-        return obj
     }
 
     // 3. clean
@@ -107,9 +99,10 @@ class ObjectTransformer constructor(val mappings: Map<String, String>, val build
     }
 
     fun wrap(key: List<String>, value: Any?): Map<String, Any?> {
-        return when (key.size) {
-            1 -> mapOf(key.first() to value)
-            else -> mapOf(key.first() to wrap(key.drop(1), value))
+        return if (key.size == 1) {
+            mapOf(key.first() to value)
+        } else {
+            mapOf(key.first() to wrap(key.drop(1), value))
         }
     }
 }

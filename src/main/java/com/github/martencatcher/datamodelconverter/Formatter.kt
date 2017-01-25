@@ -15,16 +15,16 @@ enum class Format {
 
 class Formatter {
     fun format(target: Format, data: Any): String {
-        when(target) {
+        return when(target) {
             Format.XML -> {
                 val module = JacksonXmlModule()
                 module.setDefaultUseWrapper(true)
                 val xmlMapper = XmlMapper(module)
 
-                return xmlMapper.writer().withoutRootName().writeValueAsString(data).replace(Regex("<[/]*>"), "")
+                xmlMapper.writer().withoutRootName().writeValueAsString(data).replace(Regex("<[/]*>"), "")
             }
-            Format.JSON -> return ObjectMapper().writeValueAsString(data)
-            Format.YAML -> return YAMLMapper().writeValueAsString(data)
+            Format.JSON -> ObjectMapper().writeValueAsString(data)
+            Format.YAML -> YAMLMapper().writeValueAsString(data)
         }
     }
 }
