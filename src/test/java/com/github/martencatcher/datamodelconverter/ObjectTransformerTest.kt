@@ -64,4 +64,29 @@ internal class ObjectTransformerTest {
             System.out.println(formatter.format(Format.XML, res2))
         }
     }
+
+    @Test
+    fun realTest2() {
+        val mappings = HashMap<String, String>()
+        mappings.put("$.filter[*].source", "$.configuration.firewall.family.inet.filter.term[*].from.source-address.name")
+        mappings.put("$.filter[*].target", "$.configuration.firewall.family.inet.filter.term[*].from.destination-address.name")
+        mappings.put("$.filter[*].protocol", "$.configuration.firewall.family.inet.filter.term[*].from.protocol")
+        mappings.put("$.filter[*].port", "$.configuration.firewall.family.inet.filter.term[*].from.port")
+        mappings.put("$.filter[*].access", "$.configuration.firewall.family.inet.filter.term[*].then.accept")
+
+        val doc = "{\"filter\" : [" +
+                "{ \"source\" : \"192.168.0.1\", \"target\" : \"10.10.0.3\", \"protocol\" : \"tcp\", \"port\" : \"22\", \"access\" : \"deny\"}," +
+                "{ \"source\" : \"192.168.0.2\", \"target\" : \"10.10.0.3\", \"protocol\" : \"icmp\", \"access\" : \"allow\"}," +
+                "{ \"source\" : \"192.168.0.3\", \"target\" : \"10.10.0.3\", \"protocol\" : \"tcp\", \"port\" : \"80\", \"access\" : \"deny\"}]}"
+
+        val ot = ObjectTransformer(mappings, JsonTreeBuilder())
+        val res2 = ot.transform(doc)
+
+        val formatter = Formatter()
+
+        res2.let {
+            System.out.println(formatter.format(Format.JSON, res2))
+            System.out.println(formatter.format(Format.XML, res2))
+        }
+    }
 }

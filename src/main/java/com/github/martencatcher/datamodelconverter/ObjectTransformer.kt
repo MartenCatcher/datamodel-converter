@@ -50,7 +50,7 @@ class ObjectTransformer constructor(val mappings: Map<String, String>, val build
     fun extract(sourcePath: String, leafs: List<Leaf>, doc: Any): Map<String, Any> {
         val tree = builder.buildTree(doc)
         val expression = tree.adjustPath(sourcePath)
-        return tree.applyPath(expression)?.let { extract(leafs, it) } ?: mapOf<String, Any>()
+        return tree.applyPath(expression)?.let { extract(leafs, it) } ?: mutableMapOf<String, Any>()
     }
 
     fun extract(leafs: List<Leaf>, found: Any): Map<String, Any> {
@@ -82,7 +82,10 @@ class ObjectTransformer constructor(val mappings: Map<String, String>, val build
     fun cleanKeys(doc: Any?): Any? {
         return when (doc) {
             is Map<*, *> -> {
-                doc.map { element -> wrap(clean(element.key as String), cleanKeys(element.value)) }.toMap()
+                val accumulator = HashMap<String, Any?>()
+                doc.map { element -> wrap(clean(element.key as String), cleanKeys(element.value)) }
+                        .forEach { merge(accumulator, it) }
+                accumulator
             }
             is Collection<*> -> doc.filterNotNull().map { cleanKeys(it) }
             else -> doc
@@ -100,9 +103,23 @@ class ObjectTransformer constructor(val mappings: Map<String, String>, val build
 
     fun wrap(key: List<String>, value: Any?): Map<String, Any?> {
         return if (key.size == 1) {
-            mapOf(key.first() to value)
+            mutableMapOf(key.first() to value)
         } else {
-            mapOf(key.first() to wrap(key.drop(1), value))
+            mutableMapOf(key.first() to wrap(key.drop(1), value))
+        }
+    }
+
+    fun merge(accumulator: MutableMap<String, Any?>, element: Pair<String, Any?>) {
+        val key = element.first
+        if(accumulator.contains(key)) {
+            if(accumulator[key] is MutableMap<*, *>) {
+                val second = (element.second as? MutableMap<String, Any?>)?.entries?.first() ?: throw PathException("Wrong path expression: ")
+                merge(accumulator[key] as MutableMap<String, Any?>, second.toPair())
+            } else {
+                throw PathException("Wrong path expression")
+            }
+        } else {
+            accumulator.put(element.first, element.second)
         }
     }
 }
