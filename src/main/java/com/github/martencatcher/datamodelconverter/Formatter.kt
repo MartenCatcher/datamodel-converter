@@ -1,4 +1,4 @@
-package com.github.martencatcher.datamodelconverter.formatters
+package com.github.martencatcher.datamodelconverter
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.xml.JacksonXmlModule
@@ -8,10 +8,15 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper
 /**
  * Created by mast1016 on 18.01.2017.
  */
+
+enum class Format {
+    XML, JSON, YAML
+}
+
 class Formatter {
     fun format(target: Format, data: Any): String {
         when(target) {
-            Format.XML  -> {
+            Format.XML -> {
                 val module = JacksonXmlModule()
                 module.setDefaultUseWrapper(true)
                 val xmlMapper = XmlMapper(module)

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.xml.JacksonXmlModule
 import com.fasterxml.jackson.dataformat.xml.XmlMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper
-import com.github.martencatcher.datamodelconverter.formatters.Format
+import com.github.martencatcher.datamodelconverter.Format
 import com.github.martencatcher.datamodelconverter.path.JsonTreeBuilder
 import org.junit.jupiter.api.Test
 import java.util.*
@@ -58,7 +58,7 @@ internal class ObjectTransformerTest {
         val ot = ObjectTransformer(mappings, JsonTreeBuilder())
         val res2 = ot.generateCompletePaths(doc)
 
-        val formatter = com.github.martencatcher.datamodelconverter.formatters.Formatter()
+        val formatter = Formatter()
 
         res2.let {
             System.out.println(formatter.format(Format.JSON, res2))

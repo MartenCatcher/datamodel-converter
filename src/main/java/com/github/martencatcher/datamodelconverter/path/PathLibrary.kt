@@ -1,6 +1,6 @@
 package com.github.martencatcher.datamodelconverter.path
 
-import com.github.martencatcher.datamodelconverter.exceptions.PathException
+import com.github.martencatcher.datamodelconverter.PathException
 import java.util.*
 
 /**

@@ -1,6 +1,5 @@
 package com.github.martencatcher.datamodelconverter
 
-import com.github.martencatcher.datamodelconverter.exceptions.PathException
 import com.github.martencatcher.datamodelconverter.path.*
 import java.util.*
 
@@ -69,11 +68,11 @@ class ObjectTransformer constructor(val mappings: Map<String, String>, val build
                     (found as? Collection<*>)
                             ?.filterNotNull()
                             ?.map { element ->
-                                val t = leaf.mappings
+                                leaf.mappings
                                         .map { mapping -> extract(mapping.key, mapping.value, element) }
                                         .flatMap { map -> map.entries }
-                                        .map { entity -> Pair(entity.key, entity.value) }.toMap()
-                                t
+                                        .map { entity -> Pair(entity.key, entity.value) }
+                                        .toMap()
                             } ?: leaf.mappings.map { mapping -> extract(mapping.key, mapping.value, found) }
                 }
                 is Leaf -> if (isArray) found as? Collection<*> ?: listOf<Any>(found) else found
@@ -110,9 +109,9 @@ class ObjectTransformer constructor(val mappings: Map<String, String>, val build
     }
 
     fun wrap(key: List<String>, value: Any?) : Map<String, Any?> {
-        when(key.size) {
-            1 -> return mapOf(key.first() to value)
-            else -> return mapOf(key.first() to wrap(key.drop(1), value))
+        return when(key.size) {
+            1 -> mapOf(key.first() to value)
+            else -> mapOf(key.first() to wrap(key.drop(1), value))
         }
     }
 }
