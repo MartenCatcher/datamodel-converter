@@ -69,16 +69,14 @@ class ObjectTransformer constructor(val mappings: Map<String, String>, val build
                             ?.filterNotNull()
                             ?.map { element ->
                                 leaf.mappings
-                                        .map { mapping -> extract(mapping.key, mapping.value, element) }
-                                        .flatMap { map -> map.entries }
-                                        .map { entity -> Pair(entity.key, entity.value) }
-                                        .toMap()
+                                        .flatMap { mapping -> extract(mapping.key, mapping.value, element).entries }
+                                        .fold(mutableMapOf<String, Any>()) { m, it -> m.put(it.key, it.value); m }
                             } ?: leaf.mappings.map { mapping -> extract(mapping.key, mapping.value, found) }
                 }
                 is Leaf -> if (isArray) found as? Collection<*> ?: listOf<Any>(found) else found
                 else -> throw PathException("Unknown tree element type!")
             }
-            Pair(key, value)
+            (key to value)
         }.toMap()
 
         return obj
@@ -99,17 +97,17 @@ class ObjectTransformer constructor(val mappings: Map<String, String>, val build
         }
     }
 
-    fun wrap(key: String, value: Any?) : Pair<String, Any?> {
+    fun wrap(key: String, value: Any?): Pair<String, Any?> {
         val parts = split(key)
-        return if(parts.size == 1) {
-            Pair(key, value)
+        return if (parts.size == 1) {
+            key to value
         } else {
-            return Pair(parts.first(), wrap(parts.drop(1), value))
+            parts.first() to wrap(parts.drop(1), value)
         }
     }
 
-    fun wrap(key: List<String>, value: Any?) : Map<String, Any?> {
-        return when(key.size) {
+    fun wrap(key: List<String>, value: Any?): Map<String, Any?> {
+        return when (key.size) {
             1 -> mapOf(key.first() to value)
             else -> mapOf(key.first() to wrap(key.drop(1), value))
         }
