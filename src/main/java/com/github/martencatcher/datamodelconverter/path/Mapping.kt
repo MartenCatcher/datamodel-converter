@@ -27,5 +27,3 @@ class Branch(targetPath: String,
              valueConversion: String?,
              valueCondition: String?,
              var mappings: MutableMap<String, List<Leaf>>) : Leaf(targetPath, valueConversion, valueCondition)
-
-class Empty

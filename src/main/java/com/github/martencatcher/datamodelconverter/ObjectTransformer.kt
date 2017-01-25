@@ -8,23 +8,21 @@ import java.util.*
 class ObjectTransformer constructor(val mappings: Map<String, String>, val builder: TreeBuilder) {
 
     fun generateCompletePaths(doc: Any): Any {
-        val preparedMappings = HashMap<String, List<Leaf>>() //TODO: map<string, map>
+        val preparedMappings = HashMap<String, List<Leaf>>()
 
         for ((sourcePath, targetPath) in mappings) {
-            val sourceParts = split(sourcePath)
-            val targetParts = split(targetPath)
+            val sourceParts = splitPath(sourcePath)
+            val targetParts = splitPath(targetPath)
 
             mergePaths(preparedMappings, sourceParts, targetParts)
         }
 
-        val targets = preparedMappings.map { mappings -> extract(mappings.key, mappings.value, doc) }.toList(); //TODO: list???
-
-        return when (targets.size) {
-            0 -> return Empty()
-            1 -> return targets.first()
-            else -> targets
-        }
+        val targets = preparedMappings.map { mappings -> extract(mappings.key, mappings.value, doc) }.toList()
+        val unwrapped = if (targets.size == 1) targets.first() else targets
+        return cleanKeys(unwrapped) ?: mapOf<String, Any>()
     }
+
+    // 1. prepare
 
     fun mergePaths(tree: MutableMap<String, List<Leaf>>, source: List<String>, target: List<String>): MutableMap<String, List<Leaf>> {
         if (source.size != target.size || source.isEmpty()) {
@@ -51,20 +49,13 @@ class ObjectTransformer constructor(val mappings: Map<String, String>, val build
         return tree
     }
 
-    /*fun extract(sourcePath: String, leafs: List<Leaf>, doc: Any): Any {
-        return when (doc) {
-            is Collection<*> -> doc.filterNotNull().map { element -> extractOne(sourcePath, leafs, element) }.toList()
-            else -> extractOne(sourcePath, leafs, doc)
-        }
-    }*/
+    // 2. construct
 
     fun extract(sourcePath: String, leafs: List<Leaf>, doc: Any): Map<String, Any> {
         val tree = builder.buildTree(doc)
         val expression = tree.adjustPath(sourcePath)
 
-        tree.applyPath(expression)?.let { found ->
-            return extract(leafs, found)
-        }
+        tree.applyPath(expression)?.let { return extract(leafs, it) }
 
         return mapOf()
     }
@@ -92,5 +83,36 @@ class ObjectTransformer constructor(val mappings: Map<String, String>, val build
         }.toMap()
 
         return obj
+    }
+
+    // 3. clean
+
+    fun clean(path: String) = path.replace(Regex("(^[$.]*)"), "")
+    fun split(path: String) = path.split(".")
+
+    fun cleanKeys(doc: Any?): Any? {
+        return when (doc) {
+            is Map<*, *> -> {
+                doc.map { element -> wrap(clean(element.key as String), cleanKeys(element.value)) }.toMap()
+            }
+            is Collection<*> -> doc.filterNotNull().map { cleanKeys(it) }
+            else -> doc
+        }
+    }
+
+    fun wrap(key: String, value: Any?) : Pair<String, Any?> {
+        val parts = split(key)
+        return if(parts.size == 1) {
+            Pair(key, value)
+        } else {
+            return Pair(parts.first(), wrap(parts.drop(1), value))
+        }
+    }
+
+    fun wrap(key: List<String>, value: Any?) : Map<String, Any?> {
+        when(key.size) {
+            1 -> return mapOf(key.first() to value)
+            else -> return mapOf(key.first() to wrap(key.drop(1), value))
+        }
     }
 }

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.xml.JacksonXmlModule
 import com.fasterxml.jackson.dataformat.xml.XmlMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper
-import com.github.martencatcher.datamodelconverter.builders.JPathBuilder
 import com.github.martencatcher.datamodelconverter.formatters.Format
 import com.github.martencatcher.datamodelconverter.path.JsonTreeBuilder
 import org.junit.jupiter.api.Test
@@ -23,11 +22,7 @@ internal class ObjectTransformerTest {
         val doc = "{ 'a' : [ {'c' : [{ 'b' : [1, 2, 3] }, { 'b' : [1, 2, 3] }, { 'b' : [1, 2, 3] }]}, {'c' : [ { 'b' : [4, 5, 6] }, { 'b' : [4, 5, 6] }, { 'b' : [4, 5, 6] }]}] }";
 
         val ot = ObjectTransformer(mappings, JsonTreeBuilder())
-        val res = ot.generateCompletePaths(doc)
-        System.out.println(res)
-
-        val builder = JPathBuilder()
-        val res2 = builder.build(res)
+        val res2 = ot.generateCompletePaths(doc)
 
         System.out.println(res2)
 
@@ -61,14 +56,11 @@ internal class ObjectTransformerTest {
                 "{ \"source\" : \"192.168.0.3\", \"target\" : \"10.10.0.3\", \"protocol\" : \"tcp\", \"port\" : \"80\", \"access\" : \"deny\"}]}"
 
         val ot = ObjectTransformer(mappings, JsonTreeBuilder())
-        val res = ot.generateCompletePaths(doc)
-
-        val builder = JPathBuilder()
-        val res2 = builder.build(res)
+        val res2 = ot.generateCompletePaths(doc)
 
         val formatter = com.github.martencatcher.datamodelconverter.formatters.Formatter()
 
-        res2?.let {
+        res2.let {
             System.out.println(formatter.format(Format.JSON, res2))
             System.out.println(formatter.format(Format.XML, res2))
         }

@@ -22,7 +22,7 @@ fun needCounter(path: String): Boolean {
     return path.endsWith("]")
 }
 
-fun split(path: String): List<String> {
+fun splitPath(path: String): List<String> {
     val result = ArrayList<String>()
     val buffer = StringBuilder()
     var count: Int = 0
