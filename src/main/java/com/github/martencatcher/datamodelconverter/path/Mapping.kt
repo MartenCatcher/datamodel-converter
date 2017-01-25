@@ -28,10 +28,4 @@ class Branch(targetPath: String,
              valueCondition: String?,
              var mappings: MutableMap<String, List<Leaf>>) : Leaf(targetPath, valueConversion, valueCondition)
 
-open class TargetNode
-
-class TargetEmpty: TargetNode()
-
-class TargetValue(val path: String, val value: Any): TargetNode()
-
-class TargetList(val values: List<TargetNode>): TargetNode()
+class Empty

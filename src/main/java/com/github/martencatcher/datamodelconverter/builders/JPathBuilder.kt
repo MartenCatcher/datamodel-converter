@@ -1,8 +1,6 @@
 package com.github.martencatcher.datamodelconverter.builders
 
-import com.github.martencatcher.datamodelconverter.path.TargetEmpty
-import com.github.martencatcher.datamodelconverter.path.TargetList
-import com.github.martencatcher.datamodelconverter.path.TargetValue
+import com.github.martencatcher.datamodelconverter.path.Empty
 
 /**
  * Created by mast1016 on 12.01.2017.
@@ -11,11 +9,7 @@ import com.github.martencatcher.datamodelconverter.path.TargetValue
 class JPathBuilder {
     fun build(doc: Any?): Any? {
         when(doc) {
-            is TargetValue -> return russianDoll(doc.path, build(doc.value))
-            is Map<*, *> -> return doc.map { clean(it.key as String) to it.value }.toMap()
-            is Collection<*> -> return doc.filterNotNull().mapNotNull { value -> build(value) }.toList()
-            is TargetList -> return doc.values.mapNotNull { value -> build(value) }.toList()
-            is TargetEmpty -> return null
+            is Empty -> return null
             else -> return doc
         }
     }
