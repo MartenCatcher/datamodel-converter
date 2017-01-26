@@ -5,10 +5,6 @@ import com.fasterxml.jackson.dataformat.xml.JacksonXmlModule
 import com.fasterxml.jackson.dataformat.xml.XmlMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper
 
-/**
- * Created by mast1016 on 18.01.2017.
- */
-
 enum class Format {
     XML, JSON, YAML
 }

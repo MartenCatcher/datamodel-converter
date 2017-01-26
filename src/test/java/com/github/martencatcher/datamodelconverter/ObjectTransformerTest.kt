@@ -8,10 +8,6 @@ import com.github.martencatcher.datamodelconverter.path.JsonTreeBuilder
 import com.github.martencatcher.datamodelconverter.path.Rule
 import org.junit.jupiter.api.Test
 
-
-/**
- * Created by mast1016 on 10.01.2017.
- */
 internal class ObjectTransformerTest {
 
     @Test
@@ -69,6 +65,8 @@ internal class ObjectTransformerTest {
     @Test
     fun realTest2() {
         val mappings = listOf<Rule>(
+                Rule(null, "$.configuration.firewall.family.inet.filter.name", null, "return customer"),
+                Rule("$.filter[*].source", "$.configuration.firewall.family.inet.filter.term[*].name", null, "return 'term_'..customer..'_'..index[1]"),
                 Rule("$.filter[*].source", "$.configuration.firewall.family.inet.filter.term[*].from.source-address.name", null, null),
                 Rule("$.filter[*].target", "$.configuration.firewall.family.inet.filter.term[*].from.destination-address.name", null, null),
                 Rule("$.filter[*].protocol", "$.configuration.firewall.family.inet.filter.term[*].from.protocol", null, null),

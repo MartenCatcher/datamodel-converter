@@ -3,17 +3,6 @@ package com.github.martencatcher.datamodelconverter.path
 import com.github.martencatcher.datamodelconverter.PathException
 import java.util.*
 
-/**
- * Created by mast1016 on 10.01.2017.
- */
-fun changeCounter(path: String): String {
-    return path.replace(Regex("\\[.*\\]"), "") + "[%d]"
-}
-
-fun replaceCounter(path: String): String {
-    return path.replace(Regex("\\[.*\\]"), "[%d]")
-}
-
 fun deleteCounter(path: String): String {
     return path.replace(Regex("\\[.*\\]"), "")
 }

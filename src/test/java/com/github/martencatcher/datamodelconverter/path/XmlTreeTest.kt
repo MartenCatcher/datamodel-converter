@@ -6,9 +6,6 @@ import java.io.ByteArrayInputStream
 import java.nio.charset.Charset
 import javax.xml.parsers.DocumentBuilderFactory
 
-/**
- * Created by mast1016 on 09.01.2017.
- */
 internal class XmlTreeTest {
     @Test
     fun getSubtree() {

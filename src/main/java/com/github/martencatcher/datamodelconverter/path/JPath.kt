@@ -3,9 +3,6 @@ package com.github.martencatcher.datamodelconverter.path
 import com.jayway.jsonpath.Configuration
 import com.jayway.jsonpath.JsonPath
 
-/**
- * Created by mast1016 on 09.01.2017.
- */
 class JPath(doc: Any) : Path {
     private val document = when(doc) {
         is String -> Configuration.defaultConfiguration().jsonProvider().parse(doc)
@@ -14,7 +11,16 @@ class JPath(doc: Any) : Path {
 
     override fun applyPath(path: String): Any? {
         try {
-            return JsonPath.read<Any>(document, path, null)
+            return when(document) {
+                is NumeratedMonad -> {
+                    val result = JsonPath.read<Any>(document.value, path, null)
+                    when(result) {
+                        is Collection<*> -> result.mapIndexed { index: Int, any: Any? -> NumeratedMonad(listOf(index) + document.index, any) }
+                        else -> NumeratedMonad(document.index, result)
+                    }
+                }
+                else -> JsonPath.read<Any>(document, path, null)
+            }
         } catch (e: Exception) {
             //TODO: log
             return null

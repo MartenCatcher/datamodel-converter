@@ -2,10 +2,6 @@ package com.github.martencatcher.datamodelconverter.path
 
 import java.util.*
 
-/**
- * Created by mast1016 on 11.01.2017.
- */
-
 abstract class TreeBuilder {
     private val pathHolder: MutableMap<Any, Path> = HashMap()
 

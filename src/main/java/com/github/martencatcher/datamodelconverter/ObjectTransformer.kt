@@ -6,16 +6,18 @@ import java.util.*
 //TODO: change type of mapping to List of (source: String, target: String, transformationExpression: String)
 class ObjectTransformer constructor(val mappings: List<Rule>, val builder: TreeBuilder) {
 
+    val t = Transformer
+
     fun transform(doc: Any): Any {
         val preparedMappings = HashMap<String, List<Leaf>>()
 
-        for (rule in mappings) {
-            mergePaths(preparedMappings, splitPath(rule.sourcePath), splitPath(rule.targetPath), rule)
-        }
+        mappings.forEach { if(it.sourcePath != null) { mergePaths(preparedMappings, splitPath(it.sourcePath), splitPath(it.targetPath), it) }}
 
-        val targets = preparedMappings.map { mappings -> extract(mappings.key, mappings.value, doc) }.toList()
-        val unwrapped = if (targets.size == 1) targets.first() else targets
-        return cleanKeys(unwrapped) ?: mapOf<String, Any>()
+        val target = preparedMappings.map { mappings -> extract(mappings.key, mappings.value, doc) }.first() //TODO: test arrays
+        val extracted = cleanKeys(target) as? MutableMap<String, Any?> ?: mutableMapOf<String, Any?>()
+        addDefaultPaths(extracted)
+
+        return extracted
     }
 
     // 1. prepare
@@ -61,9 +63,9 @@ class ObjectTransformer constructor(val mappings: List<Rule>, val builder: TreeB
                     is Branch -> {
                         (found as? Collection<*>)
                                 ?.filterNotNull()
-                                ?.map { element ->
+                                ?.mapIndexed { index, element ->
                                     leaf.mappings
-                                            .flatMap { mapping -> extract(mapping.key, mapping.value, element).entries }
+                                            .flatMap { mapping -> extract(mapping.key, mapping.value, NumeratedMonad(listOf(index), element)).entries }
                                             .fold(mutableMapOf<String, Any?>()) { m, it -> m.put(it.key, it.value); m }
                                 } ?: leaf.mappings.map { mapping -> extract(mapping.key, mapping.value, found) }
                     }
@@ -123,6 +125,37 @@ class ObjectTransformer constructor(val mappings: List<Rule>, val builder: TreeB
             }
         } else {
             accumulator.put(element.first, element.second)
+        }
+    }
+
+    // 4. enrich with defaults
+
+    fun addDefaultPaths(document: MutableMap<String, Any?>) {
+        return mappings
+                .filter { it.sourcePath == null }
+                .forEach { addPath(it, split(clean(it.targetPath)), document) }
+    }
+
+    fun addPath(rule: Rule, path: List<String>, document: Any?) {
+        when(document) {
+            is MutableMap<*, *> -> {
+                if(document.contains(path.first())) {
+                    if (path.size == 1) {
+                        throw PathException("Wrong path expression")
+                    } else {
+                        addPath(rule, path.drop(1), document[path.first()])
+                    }
+                } else {
+                    (document as? MutableMap<String, Any?>)?.let {
+                        if (path.size == 1) {
+                            it.put(path.first(), t.transform(rule.condition, rule.expression, null))
+                        } else {
+                            it.put(path.first(), wrap(path.drop(1), t.transform(rule.condition, rule.expression, null)))
+                        }
+                    }
+                }
+            }
+            is Collection<*> -> { document.forEach { addPath(rule, path, document) } }
         }
     }
 }
