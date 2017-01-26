@@ -1,5 +1,7 @@
 package com.github.martencatcher.datamodelconverter.path
 
+import com.github.martencatcher.datamodelconverter.IgnoreException
+import org.luaj.vm2.LuaBoolean
 import javax.script.ScriptEngineManager
 
 /**
@@ -21,16 +23,24 @@ open class Leaf(val targetPath: String,
     }
 
     fun transform(found: Any): Any? {
-        condition?.let {
-            return found
-        }
-
-        expression?.let {
+        val checked = condition?.let {
             val e = sem.getEngineByExtension(".lua")
             e.put("value", found)
             e.put("customer", "user2")
-            val res = e.eval(expression)
-            return res
+            val res = e.eval(condition)
+            (res as? LuaBoolean)?.v ?: true
+        } ?: true
+
+        if(checked) {
+            expression?.let {
+                val e = sem.getEngineByExtension(".lua")
+                e.put("value", found)
+                e.put("customer", "user2")
+                val res = e.eval(expression)
+                return res
+            }
+        } else {
+            throw IgnoreException()
         }
 
         return found

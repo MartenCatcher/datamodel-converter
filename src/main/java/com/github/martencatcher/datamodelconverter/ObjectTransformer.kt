@@ -54,22 +54,26 @@ class ObjectTransformer constructor(val mappings: List<Rule>, val builder: TreeB
     }
 
     fun extract(leafs: List<Leaf>, found: Any): Map<String, Any?> {
-        return leafs.map { leaf ->
+        return leafs.mapNotNull { leaf ->
             val key = deleteCounter(leaf.targetPath)
-            val value = when (leaf) {
-                is Branch -> {
-                    (found as? Collection<*>)
-                            ?.filterNotNull()
-                            ?.map { element ->
-                                leaf.mappings
-                                        .flatMap { mapping -> extract(mapping.key, mapping.value, element).entries }
-                                        .fold(mutableMapOf<String, Any?>()) { m, it -> m.put(it.key, it.value); m }
-                            } ?: leaf.mappings.map { mapping -> extract(mapping.key, mapping.value, found) }
+            try {
+                val value = when (leaf) {
+                    is Branch -> {
+                        (found as? Collection<*>)
+                                ?.filterNotNull()
+                                ?.map { element ->
+                                    leaf.mappings
+                                            .flatMap { mapping -> extract(mapping.key, mapping.value, element).entries }
+                                            .fold(mutableMapOf<String, Any?>()) { m, it -> m.put(it.key, it.value); m }
+                                } ?: leaf.mappings.map { mapping -> extract(mapping.key, mapping.value, found) }
+                    }
+                    is Leaf -> leaf.apply(found)
+                    else -> throw PathException("Unknown tree element type!")
                 }
-                is Leaf -> leaf.apply(found)
-                else -> throw PathException("Unknown tree element type!")
+                (key to value)
+            } catch (e : IgnoreException) {
+                null
             }
-            (key to value)
         }.toMap()
     }
 
