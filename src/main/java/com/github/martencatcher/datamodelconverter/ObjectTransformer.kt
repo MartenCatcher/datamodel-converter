@@ -13,9 +13,20 @@ class ObjectTransformer constructor(val mappings: List<Rule>, val builder: TreeB
 
         mappings.forEach { if(it.sourcePath != null) { mergePaths(preparedMappings, splitPath(it.sourcePath), splitPath(it.targetPath), it) }}
 
-        val target = preparedMappings.map { mappings -> extract(mappings.key, mappings.value, doc) }.first() //TODO: test arrays
-        val extracted = cleanKeys(target) as? MutableMap<String, Any?> ?: mutableMapOf<String, Any?>()
-        addDefaultPaths(extracted)
+        val target = cleanKeys(preparedMappings.map { mappings -> extract(mappings.key, mappings.value, doc) })
+        val extracted = when(target) {
+            is Collection<*> -> {
+                val accumulator = HashMap<String, Any?>()
+                target.forEach { element ->
+                    (element as? Map<*, *>)?.let { map ->
+                        val first = map.entries.first()
+                        merge(accumulator, first.key as String to first.value) }}
+                accumulator
+            }
+            else -> target
+        }
+
+        addDefaultPaths(extracted as MutableMap<String, Any?>)
 
         return extracted
     }

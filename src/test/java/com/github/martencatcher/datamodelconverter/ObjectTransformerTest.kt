@@ -65,14 +65,19 @@ internal class ObjectTransformerTest {
     @Test
     fun realTest2() {
         val mappings = listOf<Rule>(
-                Rule(null, "$.configuration.firewall.family.inet.filter.name", null, "return customer"),
+                Rule("$.*", "$.configuration.firewall.family.inet.filter.name", null, "return customer"),
                 Rule("$.filter[*].source", "$.configuration.firewall.family.inet.filter.term[*].name", null, "return 'term_'..customer..'_'..index[1]"),
                 Rule("$.filter[*].source", "$.configuration.firewall.family.inet.filter.term[*].from.source-address.name", null, null),
                 Rule("$.filter[*].target", "$.configuration.firewall.family.inet.filter.term[*].from.destination-address.name", null, null),
                 Rule("$.filter[*].protocol", "$.configuration.firewall.family.inet.filter.term[*].from.protocol", null, null),
                 Rule("$.filter[*].port", "$.configuration.firewall.family.inet.filter.term[*].from.port", null, null),
                 Rule("$.filter[*].access", "$.configuration.firewall.family.inet.filter.term[*].then.accept", "return value == 'Allow'", "return nil"),
-                Rule("$.filter[*].access", "$.configuration.firewall.family.inet.filter.term[*].then.reject", "return value == 'Deny'", "return nil"))
+                Rule("$.filter[*].access", "$.configuration.firewall.family.inet.filter.term[*].then.reject", "return value == 'Deny'", "return nil"),
+                Rule(null, "$.configuration.interfaces.interface.name", null, "return 'fxp0'"),
+                Rule(null, "$.configuration.interfaces.interface.unit.name", null, "return '0'"),
+                Rule(null, "$.configuration.interfaces.interface.unit.family.inet.dhcp", null, "return nil"),
+                Rule(null, "$.configuration.interfaces.interface.unit.family.inet.filter.input.filter-name", null, "return customer"))
+
 
         val doc = "{\"filter\" : [" +
                 "{ \"source\" : \"192.168.0.1\", \"target\" : \"10.10.0.3\", \"protocol\" : \"tcp\", \"port\" : \"22\", \"access\" : \"Deny\"}," +
