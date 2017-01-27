@@ -38,17 +38,23 @@ internal class ObjectTransformerTest {
     }
 
     @Test
-    fun realTest() {
+    fun ciscoTest() {//ip access-list extended Test_extend
         val mappings = listOf<Rule>(
-                Rule("$.filter[*].source", "$.accessList.rules[*].source", null, null),
-                Rule("$.filter[*].target", "$.accessList.rules[*].target", null, null),
+                Rule(null, "$.accessList.type", null, "return 'extended'"),
+                Rule(null, "$.accessList.name", null, "return customer"),
+                Rule("$.filter[*].source", "$.accessList.rules[*].source", null, "if value == 'ANY' then return 'any' else return 'host '..value end"),
+                Rule("$.filter[*].target", "$.accessList.rules[*].target", null, "if value == 'ANY' then return 'any' else return 'host '..value end"),
                 Rule("$.filter[*].protocol", "$.accessList.rules[*].protocol", null, null),
-                Rule("$.filter[*].port", "$.accessList.rules[*].port", null, null),
-                Rule("$.filter[*].access", "$.accessList.rules[*].access", null, null))
+                Rule("$.filter[*].port", "$.accessList.rules[*].port", "return value ~= nil", "return 'eq '..value"),
+                Rule("$.filter[*].access", "$.accessList.rules[*].access", null, "if value == 'Allow' then return 'permit' else return 'deny' end"),
+                Rule(null, "target.type", null, "return 'interface'"),
+                Rule(null, "target.name", null, "return 'gig1'"),
+                Rule(null, "target.acl", null, "return customer"),
+                Rule(null, "target.direction", null, "return 'in'"))
 
         val doc = "{\"filter\" : [" +
-                "{ \"source\" : \"192.168.0.1\", \"target\" : \"10.10.0.3\", \"protocol\" : \"tcp\", \"port\" : \"22\", \"access\" : \"deny\"}," +
-                "{ \"source\" : \"192.168.0.2\", \"target\" : \"10.10.0.3\", \"protocol\" : \"icmp\", \"access\" : \"allow\"}," +
+                "{ \"source\" : \"192.168.0.1\", \"target\" : \"10.10.0.3\", \"protocol\" : \"tcp\", \"port\" : \"22\", \"access\" : \"Deny\"}," +
+                "{ \"source\" : \"192.168.0.2\", \"target\" : \"10.10.0.3\", \"protocol\" : \"icmp\", \"access\" : \"Allow\"}," +
                 "{ \"source\" : \"192.168.0.3\", \"target\" : \"10.10.0.3\", \"protocol\" : \"tcp\", \"port\" : \"80\", \"access\" : \"deny\"}]}"
 
         val ot = ObjectTransformer(mappings, JsonTreeBuilder())
@@ -58,30 +64,30 @@ internal class ObjectTransformerTest {
 
         res.let {
             System.out.println(formatter.format(Format.JSON, res))
-            System.out.println(formatter.format(Format.XML, res))
+            //System.out.println(formatter.format(Format.XML, res))
         }
     }
 
     @Test
-    fun realTest2() {
+    fun juniperTest2() {
         val mappings = listOf<Rule>(
                 Rule("$.*", "$.configuration.firewall.family.inet.filter.name", null, "return customer"),
                 Rule("$.filter[*].source", "$.configuration.firewall.family.inet.filter.term[*].name", null, "return 'term_'..customer..'_'..index[1]"),
-                Rule("$.filter[*].source", "$.configuration.firewall.family.inet.filter.term[*].from.source-address.name", null, null),
-                Rule("$.filter[*].target", "$.configuration.firewall.family.inet.filter.term[*].from.destination-address.name", null, null),
+                Rule("$.filter[*].source", "$.configuration.firewall.family.inet.filter.term[*].from.source-address.name", "return value ~= 'ANY'", null),
+                Rule("$.filter[*].target", "$.configuration.firewall.family.inet.filter.term[*].from.destination-address.name", "return value ~= 'ANY'", null),
                 Rule("$.filter[*].protocol", "$.configuration.firewall.family.inet.filter.term[*].from.protocol", null, null),
                 Rule("$.filter[*].port", "$.configuration.firewall.family.inet.filter.term[*].from.port", null, null),
                 Rule("$.filter[*].access", "$.configuration.firewall.family.inet.filter.term[*].then.accept", "return value == 'Allow'", "return nil"),
                 Rule("$.filter[*].access", "$.configuration.firewall.family.inet.filter.term[*].then.reject", "return value == 'Deny'", "return nil"),
-                Rule(null, "$.configuration.interfaces.interface.name", null, "return 'fxp0'"),
+                Rule(null, "$.configuration.interfaces.interface.name", null, "return 'ge-0/0/0.0'"),
                 Rule(null, "$.configuration.interfaces.interface.unit.name", null, "return '0'"),
                 Rule(null, "$.configuration.interfaces.interface.unit.family.inet.dhcp", null, "return nil"),
                 Rule(null, "$.configuration.interfaces.interface.unit.family.inet.filter.input.filter-name", null, "return customer"))
 
-
         val doc = "{\"filter\" : [" +
                 "{ \"source\" : \"192.168.0.1\", \"target\" : \"10.10.0.3\", \"protocol\" : \"tcp\", \"port\" : \"22\", \"access\" : \"Deny\"}," +
-                "{ \"source\" : \"192.168.0.2\", \"target\" : \"10.10.0.3\", \"protocol\" : \"icmp\", \"access\" : \"Allow\"}," +
+                "{ \"source\" : \"192.168.0.2\", \"target\" : \"10.10.0.3\", \"protocol\" : \"icmp\", \"access\" : \"Deny\"}," +
+                "{ \"source\" : \"ANY\", \"target\" : \"10.10.0.3\", \"protocol\" : \"icmp\", \"access\" : \"Deny\"}," +
                 "{ \"source\" : \"192.168.0.3\", \"target\" : \"10.10.0.3\", \"protocol\" : \"tcp\", \"port\" : \"80\", \"access\" : \"Deny\"}]}"
 
         val ot = ObjectTransformer(mappings, JsonTreeBuilder())
