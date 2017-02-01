@@ -17,7 +17,14 @@ class Formatter {
                 module.setDefaultUseWrapper(true)
                 val xmlMapper = XmlMapper(module)
 
-                xmlMapper.writer().withoutRootName().writeValueAsString(data).replace(Regex("<[/]*>"), "")
+                xmlMapper.writer().withoutRootName()
+                        .writeValueAsString(data)
+                        .replace(Regex("<[/]*>"), "")
+                        .replace(Regex("(><@.+?(<\\/@.*?>|\\/>))")) { matched ->
+                            matched.value.replace(Regex("(><@)(.*?)(>)(.*?)(<\\/.*>)")) { attribute ->
+                                " " + attribute.groupValues[2] + "=\"" + attribute.groupValues[4] + "\">"
+                            }
+                        }
             }
             Format.JSON -> ObjectMapper().writeValueAsString(data)
             Format.YAML -> YAMLMapper().writeValueAsString(data)
