@@ -9,14 +9,14 @@ class ObjectTransformer constructor(val mappings: List<Rule>, val builder: TreeB
     val t = Transformer
 
     fun transform(doc: Any): Any {
-        val preparedMappings = HashMap<String, List<Leaf>>()
+        val preparedMappings = LinkedHashMap<String, List<Leaf>>()
 
         mappings.forEach { if(it.sourcePath != null) { mergePaths(preparedMappings, splitPath(it.sourcePath), splitPath(it.targetPath), it) }}
 
         val target = cleanKeys(preparedMappings.map { mappings -> extract(mappings.key, mappings.value, doc) })
         val extracted = when(target) {
             is Collection<*> -> {
-                val accumulator = HashMap<String, Any?>()
+                val accumulator = LinkedHashMap<String, Any?>()
                 target.forEach { element ->
                     (element as? Map<*, *>)?.let { map ->
                         val first = map.entries.first()
@@ -45,7 +45,7 @@ class ObjectTransformer constructor(val mappings: List<Rule>, val builder: TreeB
         } else {
             val leaf = leafs.firstOrNull { leaf -> leaf.targetPath == target.first() }
             if (leaf == null) {
-                leafs.add(Branch(target.first(), null, null, mergePaths(HashMap<String, List<Leaf>>(), source.drop(1), target.drop(1), rule)))
+                leafs.add(Branch(target.first(), null, null, mergePaths(LinkedHashMap<String, List<Leaf>>(), source.drop(1), target.drop(1), rule)))
             } else {
                 when (leaf) {
                     is Branch -> leaf.mappings = mergePaths(leaf.mappings, source.drop(1), target.drop(1), rule)
@@ -98,7 +98,7 @@ class ObjectTransformer constructor(val mappings: List<Rule>, val builder: TreeB
     fun cleanKeys(doc: Any?): Any? {
         return when (doc) {
             is Map<*, *> -> {
-                val accumulator = HashMap<String, Any?>()
+                val accumulator = LinkedHashMap<String, Any?>()
                 doc.map { element -> wrap(clean(element.key as String), cleanKeys(element.value)) }
                         .forEach { merge(accumulator, it) }
                 accumulator

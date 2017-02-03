@@ -100,4 +100,41 @@ internal class ObjectTransformerTest {
             System.out.println(formatter.format(Format.XML, res))
         }
     }
+
+    @Test
+    fun paloAltoTest2() {
+        val mappings = listOf<Rule>(
+                Rule("$.filter[*].source", "$.wrapper.entry[].@name", null, "return 'entry_'..customer..'_'..index[1]"),
+                Rule("$.filter[*].source", "$.wrapper.entry[].to.member", null, "return 'public'"),
+                Rule("$.filter[*].source", "$.wrapper.entry[].from.member", null, "return 'trusted'"),
+                Rule("$.filter[*].source", "$.wrapper.entry[].source.member", null, null),
+                Rule("$.filter[*].target", "$.wrapper.entry[].destination.member", null, null),
+                Rule("$.filter[*].target", "$.wrapper.entry[].source-user.member", null, "return 'any'"),
+                Rule("$.filter[*].target", "$.wrapper.entry[].category.member", null, "return 'any'"),
+                Rule("$.filter[*].protocol", "$.wrapper.entry[].application.member", "return value == 'ICMP'", "return 'ping'"),
+                Rule("$.filter[*].port", "$.wrapper.entry[].application.member", "return value == '22'", "return 'ssh'"),
+                Rule("$.filter[*].port", "$.wrapper.entry[].application.member", "return value == '80'", "return 'http'"),
+                Rule("$.filter[*].port", "$.wrapper.entry[].application.member", "return value == '443'", "return 'https'"),
+                Rule("$.filter[*].port", "$.wrapper.entry[].service.member", null, "return 'any'"),
+                Rule("$.filter[*].port", "$.wrapper.entry[].hip-profiles.member", null, "return 'any'"),
+                Rule("$.filter[*].access", "$.wrapper.entry[].action", null, "if value == 'Allow' then return 'allow' else return 'deny ' end"),
+                Rule("$.filter[*].access", "$.wrapper.entry[].log-start", null, "return 'yes'"),
+                Rule("$.filter[*].access", "$.wrapper.entry[].rule-type", null, "return 'universal'"))
+
+        val doc = "{\"filter\" : [" +
+                "{ \"source\" : \"192.168.0.1\", \"target\" : \"10.10.0.3\", \"protocol\" : \"TCP\", \"port\" : \"22\", \"access\" : \"Deny\"}," +
+                "{ \"source\" : \"192.168.0.2\", \"target\" : \"10.10.0.3\", \"protocol\" : \"ICMP\", \"access\" : \"Deny\"}," +
+                "{ \"source\" : \"ANY\", \"target\" : \"10.10.0.3\", \"protocol\" : \"ICMP\", \"access\" : \"Deny\"}," +
+                "{ \"source\" : \"192.168.0.3\", \"target\" : \"10.10.0.3\", \"protocol\" : \"tcp\", \"port\" : \"80\", \"access\" : \"Deny\"}]}"
+
+        val ot = ObjectTransformer(mappings, JsonTreeBuilder())
+        val res = ot.transform(doc)
+
+        val formatter = Formatter()
+
+        res.let {
+            System.out.println(formatter.format(Format.JSON, res))
+            System.out.println(formatter.format(Format.XML, res))
+        }
+    }
 }
